@@ -6,6 +6,8 @@ from .generator import synthetic_rgb, synthetic_tof, now_ns
 from .codec import encode_rgb_jpeg, encode_rgb_png, encode_depth_png16
 from .metrics import StreamStats
 from .transports.memory_bus import MemoryBus, Packet
+from .exporters.csv_export import write as csv_write
+from .exporters.prom_export import format_prometheus
 
 console = Console()
 
@@ -46,6 +48,8 @@ def main():
     ap.add_argument("--codec", choices=["jpeg","png","png16"], default="jpeg")
     ap.add_argument("--hz", type=float, default=30.0)
     ap.add_argument("--seconds", type=float, default=10.0)
+    ap.add_argument("--csv", type=str, default="", help="Write summary CSV to this path")
+    ap.add_argument("--prom", type=str, default="", help="Write Prometheus textfile to this path")
     args = ap.parse_args()
 
     bus = MemoryBus()
@@ -62,6 +66,14 @@ def main():
     for k in ["tx","rx","loss_pct","mb_tx","lat_ms_p50","lat_ms_p95","lat_ms_mean"]:
         table.add_row(k, str(summary[k]))
     console.print(table)
+
+    if args.csv:
+        csv_write(summary, args.csv)
+        console.print(f"[dim]wrote {args.csv}[/dim]")
+    if args.prom:
+        with open(args.prom, "w") as f:
+            f.write(format_prometheus(summary))
+        console.print(f"[dim]wrote {args.prom}[/dim]")
 
 if __name__ == "__main__":
     main()

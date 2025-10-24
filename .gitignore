@@ -10,3 +10,4 @@ build/
 
 metrics.csv
 bench.csv
+metrics.prom
