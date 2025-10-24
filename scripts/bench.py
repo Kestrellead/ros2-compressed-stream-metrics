@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-import csv, threading, argparse
-from stream_metrics.cli import producer, consumer
+import csv, threading, argparse, time, random
 from stream_metrics.metrics import StreamStats
-from stream_metrics.transports.memory_bus import MemoryBus
+from stream_metrics.transports.memory_bus import MemoryBus, Packet
 from stream_metrics.codec import make_encoder
 from stream_metrics.generator import synthetic_rgb, synthetic_tof, now_ns
 
@@ -11,14 +10,12 @@ def run(kind, codec, hz, seconds, quality, drop_pct):
     enc = make_encoder(kind, codec, quality=quality)
 
     def prod():
-        import time, random
         period = 1.0 / hz
         t0 = time.time(); idx = 0
         while time.time() - t0 < seconds:
             img = synthetic_rgb(idx=idx) if kind=="rgb" else synthetic_tof(idx=idx)
             if drop_pct <= 0 or random.random() >= (drop_pct/100.0):
                 bb = enc(img); ts = now_ns()
-                from stream_metrics.transports.memory_bus import Packet
                 bus.publish(Packet(ts_ns=ts, payload=bb))
                 stats.record_tx(len(bb))
             idx += 1
@@ -27,7 +24,6 @@ def run(kind, codec, hz, seconds, quality, drop_pct):
             if sl > 0: time.sleep(sl)
 
     def cons():
-        import time
         t0 = time.time()
         while time.time() - t0 < seconds:
             pkt = bus.subscribe(timeout=0.2)
@@ -38,14 +34,13 @@ def run(kind, codec, hz, seconds, quality, drop_pct):
     tp = threading.Thread(target=prod, daemon=True)
     tc = threading.Thread(target=cons, daemon=True)
     tp.start(); tc.start(); tp.join(); tc.join()
-
     out = stats.summary()
     out.update({"kind":kind,"codec":codec,"hz":hz,"seconds":seconds,"quality":quality,"drop_pct":drop_pct})
     return out
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--seconds", type=float, default=2.0)
+    ap.add_argument("--seconds", type=float, default=1.0)
     ap.add_argument("--hz", default="10,30")
     ap.add_argument("--kinds", default="rgb,tof")
     ap.add_argument("--codecs-rgb", default="jpeg,png")
