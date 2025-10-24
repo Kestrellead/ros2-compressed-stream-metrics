@@ -6,8 +6,8 @@ from rich.live import Live
 from .generator import synthetic_rgb, synthetic_tof, now_ns
 from .codec import make_encoder
 from .metrics import StreamStats
-from .transports.memory_bus import MemoryBus, Packet
-from .transports.impair import ImpairedBus
+from .transports.bus_factory import make_bus
+from .transports.memory_bus import Packet
 from .exporters.csv_export import write as csv_write
 from .exporters.prom_export import format_prometheus
 from .exporters.hist_export import write_histogram, write_prometheus as write_hist_prom
@@ -52,27 +52,26 @@ def render_table(stats: StreamStats) -> Table:
     return t
 
 def main():
-    ap = argparse.ArgumentParser(description="Simulated compressed streaming with latency/loss metrics.")
+    ap = argparse.ArgumentParser(description="Compressed streaming with metrics.")
+    ap.add_argument("--bus", choices=["memory","zmq"], default="memory")
+    ap.add_argument("--endpoint", default="tcp://127.0.0.1:5556")
     ap.add_argument("--kind", choices=["rgb","tof"], default="rgb")
     ap.add_argument("--codec", choices=["jpeg","png","png16"], default="jpeg")
     ap.add_argument("--hz", type=float, default=30.0)
     ap.add_argument("--seconds", type=float, default=10.0)
-    ap.add_argument("--quality", type=int, default=80, help="Compression quality (10–100)")
-    ap.add_argument("--drop-pct", type=float, default=0.0, help="Simulate publish drop percent [0..100]")
-    ap.add_argument("--net-latency-ms", type=float, default=0.0, help="Extra one-way latency on receive path")
-    ap.add_argument("--net-jitter-ms", type=float, default=0.0, help="Stddev of latency jitter (gaussian)")
-    ap.add_argument("--drop-pct-rx", type=float, default=0.0, help="Simulate drop on receive path [0..100]")
-    ap.add_argument("--csv", type=str, default="", help="Write summary CSV to this path")
-    ap.add_argument("--prom", type=str, default="", help="Write Prometheus textfile to this path")
-    ap.add_argument("--hist-csv", type=str, default="", help="Write latency histogram CSV to this path")
-    ap.add_argument("--hist-prom", type=str, default="", help="Write latency histogram in Prom format")
-    ap.add_argument("--visualize", action="store_true", help="Live update table while running")
+    ap.add_argument("--quality", type=int, default=80)
+    ap.add_argument("--drop-pct", type=float, default=0.0)
+    ap.add_argument("--net-latency-ms", type=float, default=0.0)
+    ap.add_argument("--net-jitter-ms", type=float, default=0.0)
+    ap.add_argument("--drop-pct-rx", type=float, default=0.0)
+    ap.add_argument("--csv", type=str, default="")
+    ap.add_argument("--prom", type=str, default="")
+    ap.add_argument("--hist-csv", type=str, default="")
+    ap.add_argument("--hist-prom", type=str, default="")
+    ap.add_argument("--visualize", action="store_true")
     args = ap.parse_args()
 
-    base_bus = MemoryBus()
-    use_imp = (args.net_latency_ms > 0.0) or (args.net_jitter_ms > 0.0) or (args.drop_pct_rx > 0.0)
-    bus = ImpairedBus(base_bus, args.net_latency_ms, args.net_jitter_ms, args.drop_pct_rx) if use_imp else base_bus
-
+    bus = make_bus(args.bus, args.endpoint, args.net_latency_ms, args.net_jitter_ms, args.drop_pct_rx)
     stats = StreamStats()
 
     th_p = threading.Thread(target=producer, args=(
