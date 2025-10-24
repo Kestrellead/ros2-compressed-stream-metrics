@@ -18,18 +18,14 @@ dependencies = [
 [project.scripts]
 stream-demo = "stream_metrics.cli:main"
 
-[tool.ruff]
 line-length = 100
 target-version = "py311"
 
-[tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = ["E203", "W503"]
 
-[tool.ruff]
 line-length = 100
 target-version = "py311"
 
-[tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = ["E203", "W503"]
