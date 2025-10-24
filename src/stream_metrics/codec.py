@@ -1,23 +1,22 @@
 from __future__ import annotations
-import cv2
-import numpy as np
+import cv2, numpy as np
+from typing import Callable
+EncodeFn = Callable[[np.ndarray], bytes]
 
-def encode_rgb_jpeg(img: np.ndarray, quality: int = 80) -> bytes:
-    ok, buf = cv2.imencode(".jpg", img, [int(cv2.IMWRITE_JPEG_QUALITY), int(quality)])
-    if not ok:
-        raise RuntimeError("JPEG encode failed")
-    return buf.tobytes()
+def make_encoder(kind: str, codec: str, quality: int = 80) -> EncodeFn:
+    if kind == "rgb" and codec == "jpeg":
+        q = int(np.clip(quality, 10, 100))
+        return lambda img: _encode(".jpg", img, [int(cv2.IMWRITE_JPEG_QUALITY), q])
+    if kind == "rgb" and codec == "png":
+        level = int(np.clip(round((100 - quality) * 9 / 90), 0, 9))
+        return lambda img: _encode(".png", img, [int(cv2.IMWRITE_PNG_COMPRESSION), level])
+    if kind == "tof" and codec == "png16":
+        level = int(np.clip(round((100 - quality) * 9 / 90), 0, 9))
+        return lambda depth: _encode(".png", depth.astype(np.uint16), [int(cv2.IMWRITE_PNG_COMPRESSION), level])
+    raise ValueError(f"unsupported kind/codec: {kind}/{codec}")
 
-def encode_rgb_png(img: np.ndarray, level: int = 3) -> bytes:
-    ok, buf = cv2.imencode(".png", img, [int(cv2.IMWRITE_PNG_COMPRESSION), int(level)])
+def _encode(ext: str, arr: np.ndarray, params: list[int]) -> bytes:
+    ok, buf = cv2.imencode(ext, arr, params)
     if not ok:
-        raise RuntimeError("PNG encode failed")
-    return buf.tobytes()
-
-def encode_depth_png16(depth: np.ndarray, level: int = 3) -> bytes:
-    if depth.dtype != np.uint16:
-        depth = depth.astype(np.uint16)
-    ok, buf = cv2.imencode(".png", depth, [int(cv2.IMWRITE_PNG_COMPRESSION), int(level)])
-    if not ok:
-        raise RuntimeError("PNG16 encode failed")
+        raise RuntimeError(f"encode failed: {ext}")
     return buf.tobytes()
