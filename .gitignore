@@ -7,3 +7,6 @@ build/
 .pytest_cache/
 .env
 .DS_Store
+
+metrics.csv
+bench.csv
