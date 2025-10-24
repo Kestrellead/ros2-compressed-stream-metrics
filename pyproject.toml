@@ -5,15 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "stream_metrics"
 version = "0.1.0"
-description = "Simulated compressed camera/ToF streaming with latency and loss metrics. ROS2-ready architecture."
+description = "Simulated RGB/ToF streaming with compression; latency/loss metrics; ROS2-ready."
 authors = [{ name = "Tristan Linardos", email = "linardostristan@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "numpy>=1.26",
-    "opencv-python>=4.9",
-    "rich>=13.7"
+dependencies = ["numpy>=1.26","opencv-python>=4.9","rich>=13.7"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: Scientific/Engineering :: Image Processing"
 ]
 
 [project.scripts]
 stream-demo = "stream_metrics.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2"]
