@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stream_metrics"
+version = "0.1.0"
+description = "Simulated compressed camera/ToF streaming with latency & loss metrics. ROS2-ready design."
+authors = [{ name = "Tristan Linardos", email = "linardostristan@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "opencv-python>=4.9", "rich>=13.7"]
+
+[project.scripts]
+stream-demo = "stream_metrics.cli:main"
