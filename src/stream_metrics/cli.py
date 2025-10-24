@@ -10,6 +10,7 @@ from .transports.memory_bus import MemoryBus, Packet
 from .transports.impair import ImpairedBus
 from .exporters.csv_export import write as csv_write
 from .exporters.prom_export import format_prometheus
+from .exporters.hist_export import write_histogram, write_prometheus as write_hist_prom
 
 console = Console()
 
@@ -63,6 +64,8 @@ def main():
     ap.add_argument("--drop-pct-rx", type=float, default=0.0, help="Simulate drop on receive path [0..100]")
     ap.add_argument("--csv", type=str, default="", help="Write summary CSV to this path")
     ap.add_argument("--prom", type=str, default="", help="Write Prometheus textfile to this path")
+    ap.add_argument("--hist-csv", type=str, default="", help="Write latency histogram CSV to this path")
+    ap.add_argument("--hist-prom", type=str, default="", help="Write latency histogram in Prom format")
     ap.add_argument("--visualize", action="store_true", help="Live update table while running")
     args = ap.parse_args()
 
@@ -97,6 +100,12 @@ def main():
     if args.prom:
         with open(args.prom, "w") as f: f.write(format_prometheus(summary))
         console.print(f"[dim]wrote {args.prom}[/dim]")
+    if args.hist_csv or args.hist_prom:
+        hist = stats.histogram()
+        if args.hist_csv:
+            write_histogram(hist, args.hist_csv); console.print(f"[dim]wrote {args.hist_csv}[/dim]")
+        if args.hist_prom:
+            write_hist_prom(hist, args.hist_prom); console.print(f"[dim]wrote {args.hist_prom}[/dim]")
 
 if __name__ == "__main__":
     main()
