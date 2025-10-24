@@ -66,6 +66,6 @@ def quantile(data: list[float], q: float) -> float:
     if not data:
         return 0.0
     pos = (len(data) - 1) * q
-    lower, upper = int(pos), min(int(pos) + 1, len(data) - 1)
-    frac = pos - lower
-    return data[lower] * (1 - frac) + data[upper] * frac
+    lo, hi = int(pos), min(int(pos) + 1, len(data) - 1)
+    frac = pos - lo
+    return data[lo] * (1 - frac) + data[hi] * frac

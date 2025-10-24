@@ -11,3 +11,9 @@ build/
 metrics.csv
 bench.csv
 metrics.prom
+
+# local artifacts
+bench.csv
+metrics.csv
+hist.csv
+hist.prom
