@@ -17,15 +17,3 @@ dependencies = [
 
 [project.scripts]
 stream-demo = "stream_metrics.cli:main"
-
-line-length = 100
-target-version = "py311"
-
-select = ["E", "F", "I"]
-ignore = ["E203", "W503"]
-
-line-length = 100
-target-version = "py311"
-
-select = ["E", "F", "I"]
-ignore = ["E203", "W503"]
