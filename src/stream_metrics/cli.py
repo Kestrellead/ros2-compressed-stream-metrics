@@ -14,8 +14,12 @@ from .exporters.hist_export import write_histogram, write_prometheus as write_hi
 
 console = Console()
 
+
+def producer(bus: MemoryBus, kind: str, codec: str, hz: float, stats: StreamStats, duration_s: float, quality: int, drop_pct: float) -> None:
+=======
 def producer(bus, kind: str, codec: str, hz: float,
              stats: StreamStats, duration_s: float, quality: int, drop_pct: float) -> None:
+
     enc = make_encoder(kind, codec, quality=quality)
     period = 1.0 / hz
     idx = 0
@@ -43,6 +47,7 @@ def consumer(bus, stats: StreamStats, duration_s: float) -> None:
         lat_ms = (now_ns - pkt.ts_ns) / 1e6
         stats.record_rx(lat_ms, now_ms=now_ns/1e6)
 
+
 def render_table(stats: StreamStats) -> Table:
     t = Table(title="Stream Live")
     t.add_column("Metric"); t.add_column("Value")
@@ -50,6 +55,7 @@ def render_table(stats: StreamStats) -> Table:
     for k in ["tx","rx","loss_pct","mb_tx","fps","lat_ms_p50","lat_ms_p95","lat_ms_mean"]:
         t.add_row(k, str(s.get(k)))
     return t
+
 
 def main():
     ap = argparse.ArgumentParser(description="Simulated compressed streaming with latency/loss metrics.")
@@ -59,9 +65,12 @@ def main():
     ap.add_argument("--seconds", type=float, default=10.0)
     ap.add_argument("--quality", type=int, default=80, help="Compression quality (10–100)")
     ap.add_argument("--drop-pct", type=float, default=0.0, help="Simulate publish drop percent [0..100]")
+
+=======
     ap.add_argument("--net-latency-ms", type=float, default=0.0, help="Extra one-way latency on receive path")
     ap.add_argument("--net-jitter-ms", type=float, default=0.0, help="Stddev of latency jitter (gaussian)")
     ap.add_argument("--drop-pct-rx", type=float, default=0.0, help="Simulate drop on receive path [0..100]")
+
     ap.add_argument("--csv", type=str, default="", help="Write summary CSV to this path")
     ap.add_argument("--prom", type=str, default="", help="Write Prometheus textfile to this path")
     ap.add_argument("--hist-csv", type=str, default="", help="Write latency histogram CSV to this path")
@@ -75,9 +84,7 @@ def main():
 
     stats = StreamStats()
 
-    th_p = threading.Thread(target=producer, args=(
-        bus, args.kind, args.codec, args.hz, stats, args.seconds, args.quality, args.drop_pct
-    ), daemon=True)
+    th_p = threading.Thread(target=producer, args=(bus, args.kind, args.codec, args.hz, stats, args.seconds, args.quality, args.drop_pct), daemon=True)
     th_c = threading.Thread(target=consumer, args=(bus, stats, args.seconds), daemon=True)
     th_p.start(); th_c.start()
 
@@ -90,7 +97,6 @@ def main():
     th_p.join(); th_c.join()
 
     summary = stats.summary()
-    table = Table(title="Stream Summary")
     for k in ["tx","rx","loss_pct","mb_tx","fps","lat_ms_p50","lat_ms_p95","lat_ms_mean"]:
         table.add_row(k, str(summary[k]))
     console.print(table)

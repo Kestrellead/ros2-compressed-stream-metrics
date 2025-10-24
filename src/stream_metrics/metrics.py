@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-import statistics
+import statistics, math
 
 @dataclass
 class StreamStats:

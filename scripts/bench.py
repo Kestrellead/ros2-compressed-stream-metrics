@@ -8,6 +8,7 @@ from stream_metrics.generator import synthetic_rgb, synthetic_tof, now_ns
 def run(kind, codec, hz, seconds, quality, drop_pct):
     bus = MemoryBus(); stats = StreamStats()
     enc = make_encoder(kind, codec, quality=quality)
+
     def prod():
         period = 1.0 / hz
         t0 = time.time(); idx = 0
@@ -21,6 +22,7 @@ def run(kind, codec, hz, seconds, quality, drop_pct):
             next_t = t0 + idx*period
             sl = next_t - time.time()
             if sl > 0: time.sleep(sl)
+
     def cons():
         t0 = time.time()
         while time.time() - t0 < seconds:
@@ -28,6 +30,7 @@ def run(kind, codec, hz, seconds, quality, drop_pct):
             if not pkt: continue
             now = time.time_ns()
             stats.record_rx((now - pkt.ts_ns)/1e6, now_ms=now/1e6)
+
     tp = threading.Thread(target=prod, daemon=True)
     tc = threading.Thread(target=cons, daemon=True)
     tp.start(); tc.start(); tp.join(); tc.join()
